@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="card">
+    <h2>Create your poster</h2>
+    <p class="muted">Choose a city, theme, and print size. We’ll generate a ready-to-print PNG.</p>
+
+    {% if error %}
+      <div class="alert">{{ error }}</div>
+    {% endif %}
+
+    <form class="form-grid" method="post" action="{{ url_for('create') }}">
+      <label>
+        City
+        <input name="city" type="text" placeholder="Paris" required>
+      </label>
+      <label>
+        Country
+        <input name="country" type="text" placeholder="France" required>
+      </label>
+      <label>
+        Theme
+        <select name="theme">
+          {% for theme in themes %}
+            <option value="{{ theme }}">{{ theme.replace("_", " ").title() }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Map radius (meters)
+        <input name="distance" type="number" min="3000" max="40000" value="29000">
+      </label>
+      <label>
+        Print size (inches)
+        <select name="size">
+          {% for size in size_options %}
+            <option value="{{ size }}">{{ size }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Output DPI
+        <select name="dpi">
+          <option value="300" selected>300 (print ready)</option>
+          <option value="240">240 (faster preview)</option>
+        </select>
+      </label>
+      <label class="full-width">
+        Email delivery (optional)
+        <input name="email" type="email" placeholder="you@example.com">
+      </label>
+      <div class="full-width">
+        <button type="submit" class="primary">Generate poster</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card accent">
+    <h3>Instant checkout</h3>
+    <p class="muted">
+      {% if stripe_ready %}
+        Secure payments are powered by Stripe. We’ll issue an invoice and send your files automatically.
+      {% else %}
+        Stripe is not configured yet. Add keys to enable checkout and invoices.
+      {% endif %}
+    </p>
+    <div class="price-row">
+      <div>
+        <strong>{{ price_currency }} {{ "%.2f"|format(price_cents / 100) }}</strong>
+        <span class="muted">per poster</span>
+      </div>
+      <div class="chip">No account required</div>
+    </div>
+  </section>
+{% endblock %}
