@@ -39,6 +39,7 @@ python create_map_poster.py --city <city> --country <country> [options]
 | `--city` | `-c` | City name | required |
 | `--country` | `-C` | Country name | required |
 | `--theme` | `-t` | Theme name | feature_based |
+| `--size` | `-s` | Poster size (small, medium, large, xl) | medium |
 | `--distance` | `-d` | Map radius in meters | 29000 |
 | `--list-themes` | | List all available themes | |
 
@@ -83,6 +84,15 @@ python create_map_poster.py --list-themes
 | 4000-6000m | Small/dense cities (Venice, Amsterdam center) |
 | 8000-12000m | Medium cities, focused downtown (Paris, Barcelona) |
 | 15000-20000m | Large metros, full city view (Tokyo, Mumbai) |
+
+### Poster Sizes
+
+| Size | Inches | Use Case |
+|------|--------|----------|
+| Small | 11 × 17 | Handouts, clipboards |
+| Medium | 18 × 24 | Office / hallway |
+| Large | 24 × 36 | Wall posters |
+| XL | 36 × 48 | Trade shows, lobbies |
 
 ## Themes
 
