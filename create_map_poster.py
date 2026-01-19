@@ -1,4 +1,6 @@
 import osmnx as ox
+import matplotlib
+matplotlib.use("Agg", force=True)
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 import matplotlib.colors as mcolors
