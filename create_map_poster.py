@@ -213,7 +213,7 @@ def get_coordinates(city, country):
     else:
         raise ValueError(f"Could not find coordinates for {city}, {country}")
 
-def create_poster(city, country, point, dist, output_file):
+def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi=300):
     print(f"\nGenerating map for {city}, {country}...")
     
     # Progress bar for data fetching
@@ -245,7 +245,7 @@ def create_poster(city, country, point, dist, output_file):
     
     # 2. Setup Plot
     print("Rendering map...")
-    fig, ax = plt.subplots(figsize=(12, 16), facecolor=THEME['bg'])
+    fig, ax = plt.subplots(figsize=figsize, facecolor=THEME['bg'])
     ax.set_facecolor(THEME['bg'])
     ax.set_position([0, 0, 1, 1])
     
@@ -318,7 +318,7 @@ def create_poster(city, country, point, dist, output_file):
 
     # 5. Save
     print(f"Saving to {output_file}...")
-    plt.savefig(output_file, dpi=300, facecolor=THEME['bg'])
+    plt.savefig(output_file, dpi=dpi, facecolor=THEME['bg'])
     plt.close()
     print(f"✓ Done! Poster saved as {output_file}")
 

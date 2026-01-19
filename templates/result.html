@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="card">
+    <h2>Your poster is ready</h2>
+    <p class="muted">
+      City: <strong>{{ order.city }}</strong> · Theme:
+      <strong>{{ order.theme.replace("_", " ").title() }}</strong> · Size:
+      <strong>{{ order.size }}"</strong>
+    </p>
+    <div class="download-grid">
+      <a class="primary" href="{{ url_for('download', session_id=order.session_id, filename=order.poster_filename) }}">
+        Download PNG
+      </a>
+      <a href="{{ url_for('download', session_id=order.session_id, filename=order.invoice_filename) }}">
+        Download invoice
+      </a>
+    </div>
+    <p class="muted">
+      {% if order.email %}
+        {{ "Email sent!" if email_sent else "Email queued but not configured. Download links are available above." }}
+      {% else %}
+        Want email delivery? Re-run with an email address on the order form.
+      {% endif %}
+    </p>
+  </section>
+
+  <section class="card accent">
+    <h3>Print shop tips</h3>
+    <ul>
+      <li>We export at {{ order.dpi }} DPI for clean, gallery-quality prints.</li>
+      <li>Most print shops accept PNG or PDF. If they request PDF, use their conversion tools.</li>
+      <li>Stick to the size you selected to avoid stretching.</li>
+    </ul>
+  </section>
+{% endblock %}

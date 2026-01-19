@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title or "Map Poster Studio" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <div>
+          <p class="eyebrow">Map Poster Studio</p>
+          <h1>Design a city map poster in minutes</h1>
+          <p class="subtitle">
+            Create Airbnb-ready prints with premium themes, multiple sizes, and instant downloads.
+          </p>
+        </div>
+        <div class="badge">
+          <span>Ready for print</span>
+          <strong>300 DPI PNG</strong>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>
+          Built for hosts, property managers, and boutique stays. Need custom branding or bulk orders?
+          Contact us.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
