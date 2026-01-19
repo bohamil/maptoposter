@@ -69,6 +69,8 @@ def get_available_themes():
             themes.append(theme_name)
     return themes
 
+AVAILABLE_THEMES = get_available_themes()
+
 def load_theme(theme_name="feature_based"):
     """
     Load theme from JSON file in themes directory.
