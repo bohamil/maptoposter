@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="card">
+    <h2>Checkout canceled</h2>
+    <p class="muted">
+      Your payment was canceled. You can return and try again whenever you are ready.
+    </p>
+    <a class="primary" href="{{ url_for('index') }}">Back to poster builder</a>
+  </section>
+{% endblock %}

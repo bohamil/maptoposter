@@ -32,6 +32,40 @@ pip install -r requirements.txt
 python create_map_poster.py --city <city> --country <country> [options]
 ```
 
+## Web UI (Flask)
+
+Run a simple no-account checkout UI for Airbnb-ready poster orders:
+
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+Then open `http://localhost:5000`.
+
+### Stripe + email configuration
+
+The UI supports optional Stripe checkout and email delivery. Set the following environment variables:
+
+```bash
+export STRIPE_SECRET_KEY=sk_test_...
+export STRIPE_PRICE_ID=price_...
+export POSTER_PRICE_CENTS=2900
+export POSTER_PRICE_CURRENCY=usd
+export SMTP_HOST=smtp.example.com
+export SMTP_PORT=587
+export SMTP_USER=your_user
+export SMTP_PASS=your_pass
+export FROM_EMAIL=posters@example.com
+```
+
+If Stripe is not configured, posters are generated immediately with download links.
+
+### Print sizes
+
+The UI exports at 300 DPI with standard print sizes (8x10, 12x16, 18x24, 24x36 inches).
+Most print shops accept PNG files and can also convert them to PDF if needed.
+
 ### Options
 
 | Option | Short | Description | Default |
