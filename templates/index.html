@@ -1,6 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
   <section class="card">
+    <h2>Examples customers frame and share</h2>
+    <p class="muted">
+      From cozy cafés to luxury rentals, these posters sell the story of a place. Pick a theme or
+      size, and we’ll deliver a ready-to-print file.
+    </p>
+    <div class="example-grid">
+      {% for example in examples %}
+        <figure class="example-card">
+          <img
+            src="{{ url_for('example_poster', filename=example.filename) }}"
+            alt="{{ example.city }} map poster in {{ example.theme }} theme"
+            loading="lazy"
+          >
+          <figcaption>
+            <div class="example-meta">
+              <strong>{{ example.city }}</strong>
+              <span class="muted">{{ example.theme }} · {{ example.size }}</span>
+            </div>
+            <span class="example-tag">Print-ready</span>
+          </figcaption>
+        </figure>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
     <h2>Create your poster</h2>
     <p class="muted">Choose a city, theme, and print size. We’ll generate a ready-to-print PNG.</p>
 

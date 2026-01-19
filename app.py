@@ -37,6 +37,46 @@ SIZE_OPTIONS = {
     "24x36": (24, 36),
 }
 
+EXAMPLE_POSTERS = [
+    {
+        "filename": "new_york_noir_20260108_164217.png",
+        "city": "New York",
+        "theme": "Noir",
+        "size": "18x24",
+    },
+    {
+        "filename": "barcelona_warm_beige_20260108_172924.png",
+        "city": "Barcelona",
+        "theme": "Warm Beige",
+        "size": "12x16",
+    },
+    {
+        "filename": "tokyo_japanese_ink_20260108_165830.png",
+        "city": "Tokyo",
+        "theme": "Japanese Ink",
+        "size": "18x24",
+    },
+    {
+        "filename": "venice_blueprint_20260108_165527.png",
+        "city": "Venice",
+        "theme": "Blueprint",
+        "size": "12x16",
+    },
+    {
+        "filename": "san_francisco_sunset_20260108_184122.png",
+        "city": "San Francisco",
+        "theme": "Sunset",
+        "size": "24x36",
+    },
+    {
+        "filename": "singapore_neon_cyberpunk_20260108_184503.png",
+        "city": "Singapore",
+        "theme": "Neon Cyberpunk",
+        "size": "18x24",
+    },
+]
+EXAMPLE_POSTER_FILES = {example["filename"] for example in EXAMPLE_POSTERS}
+
 
 @dataclass
 class Order:
@@ -59,6 +99,19 @@ app = Flask(__name__)
 
 def stripe_ready() -> bool:
     return bool(stripe and stripe.api_key and STRIPE_PRICE_ID)
+
+
+def render_index(error: str | None = None):
+    return render_template(
+        "index.html",
+        themes=poster.AVAILABLE_THEMES,
+        size_options=SIZE_OPTIONS.keys(),
+        stripe_ready=stripe_ready(),
+        price_cents=PRICE_CENTS,
+        price_currency=PRICE_CURRENCY.upper(),
+        examples=EXAMPLE_POSTERS,
+        error=error,
+    )
 
 
 def save_order(order: Order) -> None:
@@ -138,14 +191,17 @@ def send_email(order: Order) -> bool:
 
 @app.get("/")
 def index():
-    return render_template(
-        "index.html",
-        themes=poster.AVAILABLE_THEMES,
-        size_options=SIZE_OPTIONS.keys(),
-        stripe_ready=stripe_ready(),
-        price_cents=PRICE_CENTS,
-        price_currency=PRICE_CURRENCY.upper(),
-    )
+    return render_index()
+
+
+@app.get("/examples/<path:filename>")
+def example_poster(filename: str):
+    if filename not in EXAMPLE_POSTER_FILES:
+        abort(404)
+    poster_path = BASE_DIR / poster.POSTERS_DIR / filename
+    if not poster_path.exists():
+        abort(404)
+    return send_file(poster_path, mimetype="image/png")
 
 
 @app.post("/create")
@@ -159,37 +215,15 @@ def create():
     email = request.form.get("email", "").strip() or None
 
     if not city or not country:
-        return render_template(
-            "index.html",
-            themes=poster.AVAILABLE_THEMES,
-            size_options=SIZE_OPTIONS.keys(),
-            stripe_ready=stripe_ready(),
-            price_cents=PRICE_CENTS,
-            price_currency=PRICE_CURRENCY.upper(),
-            error="City and country are required.",
-        )
+        return render_index(error="City and country are required.")
 
     if size not in SIZE_OPTIONS:
-        return render_template(
-            "index.html",
-            themes=poster.AVAILABLE_THEMES,
-            size_options=SIZE_OPTIONS.keys(),
-            stripe_ready=stripe_ready(),
-            price_cents=PRICE_CENTS,
-            price_currency=PRICE_CURRENCY.upper(),
-            error="Unsupported size selection.",
-        )
+        return render_index(error="Unsupported size selection.")
 
     coords = poster.get_coordinates(city, country)
     if coords is None:
-        return render_template(
-            "index.html",
-            themes=poster.AVAILABLE_THEMES,
-            size_options=SIZE_OPTIONS.keys(),
-            stripe_ready=stripe_ready(),
-            price_cents=PRICE_CENTS,
-            price_currency=PRICE_CURRENCY.upper(),
-            error="We could not find that city. Please double-check the spelling.",
+        return render_index(
+            error="We could not find that city. Please double-check the spelling."
         )
 
     poster_filename = (
