@@ -14,6 +14,12 @@ import argparse
 THEMES_DIR = "themes"
 FONTS_DIR = "fonts"
 POSTERS_DIR = "posters"
+POSTER_SIZES = {
+    "small": {"label": "Small", "inches": (11, 17), "use_case": "Handouts, clipboards"},
+    "medium": {"label": "Medium", "inches": (18, 24), "use_case": "Office / hallway"},
+    "large": {"label": "Large", "inches": (24, 36), "use_case": "Wall posters"},
+    "xl": {"label": "XL", "inches": (36, 48), "use_case": "Trade shows, lobbies"},
+}
 
 def load_fonts():
     """
@@ -213,6 +219,7 @@ def get_coordinates(city, country):
     else:
         raise ValueError(f"Could not find coordinates for {city}, {country}")
 
+
 def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi=300):
     print(f"\nGenerating map for {city}, {country}...")
     
@@ -366,6 +373,7 @@ Options:
   --city, -c        City name (required)
   --country, -C     Country name (required)
   --theme, -t       Theme name (default: feature_based)
+  --size, -s        Poster size: small, medium, large, xl (default: medium)
   --distance, -d    Map radius in meters (default: 29000)
   --list-themes     List all available themes
 
@@ -373,6 +381,12 @@ Distance guide:
   4000-6000m   Small/dense cities (Venice, Amsterdam old center)
   8000-12000m  Medium cities, focused downtown (Paris, Barcelona)
   15000-20000m Large metros, full city view (Tokyo, Mumbai)
+
+Poster sizes:
+  Small   11 × 17 in  Handouts, clipboards
+  Medium  18 × 24 in  Office / hallway
+  Large   24 × 36 in  Wall posters
+  XL      36 × 48 in  Trade shows, lobbies
 
 Available themes can be found in the 'themes/' directory.
 Generated posters are saved to 'posters/' directory.
@@ -419,6 +433,14 @@ Examples:
     parser.add_argument('--city', '-c', type=str, help='City name')
     parser.add_argument('--country', '-C', type=str, help='Country name')
     parser.add_argument('--theme', '-t', type=str, default='feature_based', help='Theme name (default: feature_based)')
+    parser.add_argument(
+        '--size',
+        '-s',
+        type=str,
+        default='medium',
+        choices=sorted(POSTER_SIZES.keys()),
+        help='Poster size (default: medium)'
+    )
     parser.add_argument('--distance', '-d', type=int, default=29000, help='Map radius in meters (default: 29000)')
     parser.add_argument('--list-themes', action='store_true', help='List all available themes')
     
@@ -458,7 +480,7 @@ Examples:
     try:
         coords = get_coordinates(args.city, args.country)
         output_file = generate_output_filename(args.city, args.theme)
-        create_poster(args.city, args.country, coords, args.distance, output_file)
+        create_poster(args.city, args.country, coords, args.distance, output_file, args.size)
         
         print("\n" + "=" * 50)
         print("✓ Poster generation complete!")
