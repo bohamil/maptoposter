@@ -1,0 +1,18 @@
+{
+  "session_id": "1850e7aea3704c979b4206611f35bdab",
+  "city": "Corydon",
+  "country": "Iowa",
+  "theme": "gradient_roads",
+  "distance": 8000,
+  "size": "12x16",
+  "dpi": 300,
+  "email": "bo.hamilton09@gmail.com",
+  "poster_filename": "corydon_gradient_roads_20260127_061043.png",
+  "invoice_filename": "1850e7aea3704c979b4206611f35bdab.json",
+  "created_at": "2026-01-27T12:09:07.984013+00:00",
+  "paid": true,
+  "coordinates": [
+    40.7576063,
+    -93.3182112
+  ]
+}

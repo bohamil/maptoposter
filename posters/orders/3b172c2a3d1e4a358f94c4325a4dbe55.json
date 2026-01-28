@@ -1,0 +1,18 @@
+{
+  "session_id": "3b172c2a3d1e4a358f94c4325a4dbe55",
+  "city": "Allerton",
+  "country": "Iowa",
+  "theme": "pastel_dream",
+  "distance": 3000,
+  "size": "8x10",
+  "dpi": 300,
+  "email": null,
+  "poster_filename": "allerton_pastel_dream_20260119_134949.png",
+  "invoice_filename": "3b172c2a3d1e4a358f94c4325a4dbe55.json",
+  "created_at": "2026-01-19T19:49:29.887699+00:00",
+  "paid": true,
+  "coordinates": [
+    40.7066974,
+    -93.3650143
+  ]
+}

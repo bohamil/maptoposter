@@ -1,0 +1,13 @@
+{
+  "invoice_id": "f7aa5bbe4772459d8452e9ecc0dc9842",
+  "created_at": "2026-01-27T01:32:46.222255+00:00",
+  "city": "Rapid",
+  "country": "South Dakota",
+  "theme": "blueprint",
+  "distance_meters": 10000,
+  "size": "16x12",
+  "dpi": 300,
+  "price_cents": 2900,
+  "currency": "usd",
+  "email": ""
+}

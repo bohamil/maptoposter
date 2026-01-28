@@ -1,0 +1,18 @@
+{
+  "session_id": "2ea43cd3843d4f38b939559273b5b054",
+  "city": "Rapid",
+  "country": "South Dakota",
+  "theme": "copper_patina",
+  "distance": 15000,
+  "size": "12x16",
+  "dpi": 300,
+  "email": null,
+  "poster_filename": "",
+  "invoice_filename": "2ea43cd3843d4f38b939559273b5b054.json",
+  "created_at": "2026-01-27T01:30:45.030193+00:00",
+  "paid": false,
+  "coordinates": [
+    44.0806041,
+    -103.228023
+  ]
+}

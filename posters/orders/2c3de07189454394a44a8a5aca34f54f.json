@@ -1,0 +1,18 @@
+{
+  "session_id": "2c3de07189454394a44a8a5aca34f54f",
+  "city": "Kansas City",
+  "country": "Missouri",
+  "theme": "forest",
+  "distance": 8000,
+  "size": "12x16",
+  "dpi": 300,
+  "email": "bo.hamilton09@gmail.com",
+  "poster_filename": "kansas_city_autumn_20260127_121443.png",
+  "invoice_filename": "2c3de07189454394a44a8a5aca34f54f.pdf",
+  "created_at": "2026-01-27T18:15:10.891057+00:00",
+  "paid": true,
+  "coordinates": [
+    39.100105,
+    -94.5781416
+  ]
+}

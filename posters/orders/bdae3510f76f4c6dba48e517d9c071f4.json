@@ -1,0 +1,18 @@
+{
+  "session_id": "bdae3510f76f4c6dba48e517d9c071f4",
+  "city": "Iowa City",
+  "country": "Iowa",
+  "theme": "autumn",
+  "distance": 8000,
+  "size": "16x12",
+  "dpi": 300,
+  "email": null,
+  "poster_filename": "iowa_city_autumn_20260127_074823.png",
+  "invoice_filename": "bdae3510f76f4c6dba48e517d9c071f4.pdf",
+  "created_at": "2026-01-27T13:47:09.976636+00:00",
+  "paid": true,
+  "coordinates": [
+    41.6612561,
+    -91.5299106
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "session_id": "9c0a60eb1e0e436aa3830fc42fadf72c",
+  "city": "Missoula",
+  "country": "Montana",
+  "theme": "autumn",
+  "distance": 15000,
+  "size": "12x16",
+  "dpi": 300,
+  "email": "bo.hamilton09@gmail.com",
+  "poster_filename": "missoula_autumn_20260127_075115.png",
+  "invoice_filename": "9c0a60eb1e0e436aa3830fc42fadf72c.pdf",
+  "created_at": "2026-01-27T13:50:52.148324+00:00",
+  "paid": true,
+  "coordinates": [
+    46.8701049,
+    -113.995267
+  ]
+}

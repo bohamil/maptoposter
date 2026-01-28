@@ -1,0 +1,18 @@
+{
+  "session_id": "a4dec351823b4e8c9636f4bef6c3138d",
+  "city": "rapid city",
+  "country": "south dakota",
+  "theme": "noir",
+  "distance": 15000,
+  "size": "12x16",
+  "dpi": 300,
+  "email": null,
+  "poster_filename": "rapid_city_noir_20260127_063025.png",
+  "invoice_filename": "a4dec351823b4e8c9636f4bef6c3138d.pdf",
+  "created_at": "2026-01-27T12:29:48.089324+00:00",
+  "paid": true,
+  "coordinates": [
+    44.0806041,
+    -103.228023
+  ]
+}
