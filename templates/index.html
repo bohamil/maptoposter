@@ -34,7 +34,7 @@
       <div class="alert">{{ error }}</div>
     {% endif %}
 
-    <form class="form-grid" method="post" action="{{ url_for('create') }}">
+    <form class="form-grid" method="post" action="{{ url_for('create') }}" id="create-form">
       <label>
         City
         <input name="city" type="text" placeholder="Paris" required>
@@ -58,9 +58,18 @@
       <label>
         Print size (inches)
         <select name="size">
-          {% for size in size_options %}
-            <option value="{{ size }}">{{ size }}</option>
-          {% endfor %}
+          <optgroup label="Portrait (Vertical)">
+            <option value="8x10">8" × 10"</option>
+            <option value="12x16" selected>12" × 16"</option>
+            <option value="18x24">18" × 24"</option>
+            <option value="24x36">24" × 36"</option>
+          </optgroup>
+          <optgroup label="Landscape (Horizontal)">
+            <option value="10x8">10" × 8"</option>
+            <option value="16x12">16" × 12"</option>
+            <option value="24x18">24" × 18"</option>
+            <option value="36x24">36" × 24"</option>
+          </optgroup>
         </select>
       </label>
       <label>
@@ -75,9 +84,205 @@
         <input name="email" type="email" placeholder="you@example.com">
       </label>
       <div class="full-width">
-        <button type="submit" class="primary">Generate poster</button>
+        <button type="submit" class="primary" id="submit-btn">Generate poster</button>
       </div>
     </form>
+  </section>
+
+  <!-- Loading Modal -->
+  <div id="loading-modal" class="modal">
+    <div class="modal-content">
+      <div class="loading-spinner"></div>
+      <h3 id="loading-title">Generating your map poster...</h3>
+      <p id="loading-message" class="loading-status">This usually takes 10-30 seconds</p>
+      <div class="loading-steps">
+        <div class="step" id="step-geocoding">
+          <div class="step-icon">📍</div>
+          <div class="step-text">
+            <strong>Finding coordinates</strong>
+            <span class="step-status">Starting...</span>
+          </div>
+        </div>
+        <div class="step" id="step-downloading">
+          <div class="step-icon">🗺️</div>
+          <div class="step-text">
+            <strong>Downloading map data</strong>
+            <span class="step-status">Waiting...</span>
+          </div>
+        </div>
+        <div class="step" id="step-rendering">
+          <div class="step-icon">🎨</div>
+          <div class="step-text">
+            <strong>Rendering poster</strong>
+            <span class="step-status">Waiting...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 3rem;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid #f0f0f0;
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      margin: 0 auto 2rem;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #loading-title {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .loading-status {
+      color: #666;
+      margin-bottom: 2rem;
+    }
+
+    .loading-steps {
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+
+    .step.active {
+      background: #e7f3ff;
+      border-left: 4px solid #007bff;
+    }
+
+    .step.complete {
+      background: #e8f5e9;
+      border-left: 4px solid #28a745;
+    }
+
+    .step-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      flex: 1;
+    }
+
+    .step-text strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      color: #333;
+    }
+
+    .step-status {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .step.active .step-status {
+      color: #007bff;
+      font-weight: 600;
+    }
+
+    .step.complete .step-status {
+      color: #28a745;
+    }
+
+    .step.complete .step-status::before {
+      content: "✓ ";
+    }
+  </style>
+
+  <script>
+    const form = document.getElementById('create-form');
+    const modal = document.getElementById('loading-modal');
+    const submitBtn = document.getElementById('submit-btn');
+
+    // Simulate progress steps
+    function updateStep(stepId, status, message) {
+      const step = document.getElementById(stepId);
+      const statusEl = step.querySelector('.step-status');
+
+      step.classList.remove('active', 'complete');
+      if (status === 'active') {
+        step.classList.add('active');
+      } else if (status === 'complete') {
+        step.classList.add('complete');
+      }
+
+      statusEl.textContent = message;
+    }
+
+    function simulateProgress() {
+      // Step 1: Geocoding (starts immediately)
+      updateStep('step-geocoding', 'active', 'Looking up location...');
+
+      setTimeout(() => {
+        updateStep('step-geocoding', 'complete', 'Found!');
+        updateStep('step-downloading', 'active', 'Fetching streets, water, parks...');
+      }, 2000);
+
+      setTimeout(() => {
+        updateStep('step-downloading', 'complete', 'Downloaded!');
+        updateStep('step-rendering', 'active', 'Creating your poster...');
+      }, 8000);
+    }
+
+    form.addEventListener('submit', function(e) {
+      // Show loading modal
+      modal.classList.add('active');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Generating...';
+
+      // Start progress simulation
+      simulateProgress();
+
+      // Form will submit normally
+    });
+  </script>
   </section>
 
   <section class="card accent">

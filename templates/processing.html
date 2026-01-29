@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="processing-container">
+  <div class="processing-card">
+    <div class="loading-spinner-large"></div>
+    <h2>Processing Your Payment...</h2>
+    <p class="processing-message">
+      Your payment was successful! We're generating your high-resolution poster now.
+    </p>
+    <p class="processing-hint">
+      This usually takes 10-30 seconds. This page will automatically refresh.
+    </p>
+
+    <div class="order-summary">
+      <h3>Order Details</h3>
+      <dl>
+        <dt>City:</dt>
+        <dd>{{ order.city }}, {{ order.country }}</dd>
+        <dt>Theme:</dt>
+        <dd>{{ order.theme.replace('_', ' ').title() }}</dd>
+        <dt>Size:</dt>
+        <dd>{{ order.size }} at {{ order.dpi }} DPI</dd>
+        {% if order.email %}
+        <dt>Delivery:</dt>
+        <dd>{{ order.email }}</dd>
+        {% endif %}
+      </dl>
+    </div>
+
+    <p class="processing-note">
+      Don't close this page. If you do, check your email for the download link.
+    </p>
+  </div>
+</div>
+
+<style>
+  .processing-container {
+    max-width: 600px;
+    margin: 4rem auto;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .processing-card {
+    background: white;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .loading-spinner-large {
+    width: 80px;
+    height: 80px;
+    border: 6px solid #f0f0f0;
+    border-top: 6px solid #007bff;
+    border-radius: 50%;
+    margin: 0 auto 2rem;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .processing-container h2 {
+    margin: 0 0 1rem 0;
+    color: #333;
+  }
+
+  .processing-message {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+
+  .processing-hint {
+    color: #999;
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  .order-summary {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    text-align: left;
+  }
+
+  .order-summary h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    color: #333;
+  }
+
+  .order-summary dl {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 0.75rem;
+    margin: 0;
+  }
+
+  .order-summary dt {
+    font-weight: 600;
+    color: #666;
+  }
+
+  .order-summary dd {
+    margin: 0;
+    color: #333;
+  }
+
+  .processing-note {
+    font-size: 0.9rem;
+    color: #666;
+    font-style: italic;
+  }
+</style>
+
+<script>
+  // Auto-refresh every 3 seconds to check if order is ready
+  setTimeout(function() {
+    window.location.reload();
+  }, 3000);
+</script>
+{% endblock %}

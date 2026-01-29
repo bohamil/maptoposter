@@ -1,15 +1,27 @@
+import os
+import json
+import time
+import argparse
+from datetime import datetime
+from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import osmnx as ox
-import matplotlib.pyplot as plt
-from matplotlib.font_manager import FontProperties
-import matplotlib.colors as mcolors
 import numpy as np
 from geopy.geocoders import Nominatim
 from tqdm import tqdm
-import time
-import json
-import os
-from datetime import datetime
-import argparse
+
+import matplotlib
+matplotlib.use("Agg", force=True)
+import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
+import matplotlib.colors as mcolors
+
+# Configure OSMnx
+APP_UA = os.getenv("OSM_USER_AGENT", "CityMapPoster/1.0 (contact: bo.hamilton09@gmail.com)")
+ox.settings.http_headers = {"User-Agent": APP_UA}
+ox.settings.use_cache = True
+ox.settings.cache_folder = "./cache"
 
 THEMES_DIR = "themes"
 FONTS_DIR = "fonts"
@@ -71,6 +83,7 @@ def get_available_themes():
 
 AVAILABLE_THEMES = get_available_themes()
 
+@lru_cache(maxsize=32)
 def load_theme(theme_name="feature_based"):
     """
     Load theme from JSON file in themes directory.
@@ -139,117 +152,156 @@ def create_gradient_fade(ax, color, location='bottom', zorder=10):
     ax.imshow(gradient, extent=[xlim[0], xlim[1], y_bottom, y_top], 
               aspect='auto', cmap=custom_cmap, zorder=zorder, origin='lower')
 
-def get_edge_colors_by_type(G):
+def get_edge_colors_and_widths_by_type(G):
     """
-    Assigns colors to edges based on road type hierarchy.
-    Returns a list of colors corresponding to each edge in the graph.
+    Assigns colors and widths to edges based on road type hierarchy.
+    Returns tuple of (colors, widths) corresponding to each edge in the graph.
+    Combined single-pass iteration for better performance.
     """
     edge_colors = []
-    
+    edge_widths = []
+
     for u, v, data in G.edges(data=True):
         # Get the highway type (can be a list or string)
         highway = data.get('highway', 'unclassified')
-        
+
         # Handle list of highway types (take the first one)
         if isinstance(highway, list):
             highway = highway[0] if highway else 'unclassified'
-        
-        # Assign color based on road type
+
+        # Assign color and width based on road type (single pass)
         if highway in ['motorway', 'motorway_link']:
             color = THEME['road_motorway']
-        elif highway in ['trunk', 'trunk_link', 'primary', 'primary_link']:
-            color = THEME['road_primary']
-        elif highway in ['secondary', 'secondary_link']:
-            color = THEME['road_secondary']
-        elif highway in ['tertiary', 'tertiary_link']:
-            color = THEME['road_tertiary']
-        elif highway in ['residential', 'living_street', 'unclassified']:
-            color = THEME['road_residential']
-        else:
-            color = THEME['road_default']
-        
-        edge_colors.append(color)
-    
-    return edge_colors
-
-def get_edge_widths_by_type(G):
-    """
-    Assigns line widths to edges based on road type.
-    Major roads get thicker lines.
-    """
-    edge_widths = []
-    
-    for u, v, data in G.edges(data=True):
-        highway = data.get('highway', 'unclassified')
-        
-        if isinstance(highway, list):
-            highway = highway[0] if highway else 'unclassified'
-        
-        # Assign width based on road importance
-        if highway in ['motorway', 'motorway_link']:
             width = 1.2
         elif highway in ['trunk', 'trunk_link', 'primary', 'primary_link']:
+            color = THEME['road_primary']
             width = 1.0
         elif highway in ['secondary', 'secondary_link']:
+            color = THEME['road_secondary']
             width = 0.8
         elif highway in ['tertiary', 'tertiary_link']:
+            color = THEME['road_tertiary']
             width = 0.6
-        else:
+        elif highway in ['residential', 'living_street', 'unclassified']:
+            color = THEME['road_residential']
             width = 0.4
-        
+        else:
+            color = THEME['road_default']
+            width = 0.4
+
+        edge_colors.append(color)
         edge_widths.append(width)
-    
-    return edge_widths
+
+    return edge_colors, edge_widths
+
+# Global geocoder instance (reused across requests)
+_geolocator = None
+
+def _get_geolocator():
+    """Get or create the singleton Nominatim geolocator instance."""
+    global _geolocator
+    if _geolocator is None:
+        _geolocator = Nominatim(user_agent="CityMapPoster/1.0 (contact: bo.hamilton09@gmail.com)")
+    return _geolocator
+
+# Cache for geocoding results (key: "city, country")
+_geocode_cache = {}
+_last_geocode_time = 0
 
 def get_coordinates(city, country):
     """
     Fetches coordinates for a given city and country using geopy.
-    Includes rate limiting to be respectful to the geocoding service.
+    Includes caching and rate limiting to be respectful to the geocoding service.
     """
+    global _last_geocode_time
+
+    cache_key = f"{city.lower()}, {country.lower()}"
+
+    # Check cache first
+    if cache_key in _geocode_cache:
+        print(f"✓ Using cached coordinates for {city}, {country}")
+        lat, lon, address = _geocode_cache[cache_key]
+        print(f"✓ Found: {address}")
+        print(f"✓ Coordinates: {lat}, {lon}")
+        return (lat, lon)
+
     print("Looking up coordinates...")
-    geolocator = Nominatim(user_agent="city_map_poster")
-    
-    # Add a small delay to respect Nominatim's usage policy
-    time.sleep(1)
-    
+    geolocator = _get_geolocator()
+
+    # Rate limiting: ensure at least 1 second between API calls
+    elapsed = time.time() - _last_geocode_time
+    if elapsed < 1.0:
+        time.sleep(1.0 - elapsed)
+
     location = geolocator.geocode(f"{city}, {country}")
-    
+    _last_geocode_time = time.time()
+
     if location:
         print(f"✓ Found: {location.address}")
         print(f"✓ Coordinates: {location.latitude}, {location.longitude}")
+
+        # Cache the result
+        _geocode_cache[cache_key] = (location.latitude, location.longitude, location.address)
+
         return (location.latitude, location.longitude)
     else:
         raise ValueError(f"Could not find coordinates for {city}, {country}")
 
 
-def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi=300):
+def _fetch_street_network(point, dist):
+    """Fetch street network data from OSM."""
+    return ox.graph_from_point(point, dist=dist, dist_type='bbox', network_type='all')
+
+def _fetch_water_features(point, dist):
+    """Fetch water features from OSM."""
+    try:
+        return ox.features_from_point(point, tags={'natural': 'water', 'waterway': 'riverbank'}, dist=dist)
+    except:
+        return None
+
+def _fetch_parks(point, dist):
+    """Fetch parks and green spaces from OSM."""
+    try:
+        return ox.features_from_point(point, tags={'leisure': 'park', 'landuse': 'grass'}, dist=dist)
+    except:
+        return None
+
+def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi=300, watermark=False):
     print(f"\nGenerating map for {city}, {country}...")
-    
-    # Progress bar for data fetching
-    with tqdm(total=3, desc="Fetching map data", unit="step", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
-        # 1. Fetch Street Network
-        pbar.set_description("Downloading street network")
-        G = ox.graph_from_point(point, dist=dist, dist_type='bbox', network_type='all')
-        pbar.update(1)
-        time.sleep(0.5)  # Rate limit between requests
-        
-        # 2. Fetch Water Features
-        pbar.set_description("Downloading water features")
-        try:
-            water = ox.features_from_point(point, tags={'natural': 'water', 'waterway': 'riverbank'}, dist=dist)
-        except:
-            water = None
-        pbar.update(1)
-        time.sleep(0.3)
-        
-        # 3. Fetch Parks
-        pbar.set_description("Downloading parks/green spaces")
-        try:
-            parks = ox.features_from_point(point, tags={'leisure': 'park', 'landuse': 'grass'}, dist=dist)
-        except:
-            parks = None
-        pbar.update(1)
-    
+
+    # Parallel data fetching with ThreadPoolExecutor
+    print("Fetching map data in parallel...")
+    G = None
+    water = None
+    parks = None
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        # Submit all tasks concurrently
+        future_streets = executor.submit(_fetch_street_network, point, dist)
+        future_water = executor.submit(_fetch_water_features, point, dist)
+        future_parks = executor.submit(_fetch_parks, point, dist)
+
+        # Progress bar for completion tracking
+        futures = {
+            'Street network': future_streets,
+            'Water features': future_water,
+            'Parks/green spaces': future_parks
+        }
+
+        with tqdm(total=3, desc="Downloading", unit="layer", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
+            for name, future in futures.items():
+                pbar.set_description(f"Downloading {name}")
+                result = future.result()  # Wait for completion
+
+                if name == 'Street network':
+                    G = result
+                elif name == 'Water features':
+                    water = result
+                elif name == 'Parks/green spaces':
+                    parks = result
+
+                pbar.update(1)
+
     print("✓ All data downloaded successfully!")
     
     # 2. Setup Plot
@@ -267,8 +319,7 @@ def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi
     
     # Layer 2: Roads with hierarchy coloring
     print("Applying road hierarchy colors...")
-    edge_colors = get_edge_colors_by_type(G)
-    edge_widths = get_edge_widths_by_type(G)
+    edge_colors, edge_widths = get_edge_colors_and_widths_by_type(G)
     
     ox.plot_graph(
         G, ax=ax, bgcolor=THEME['bg'],
@@ -282,37 +333,91 @@ def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi
     create_gradient_fade(ax, THEME['gradient_color'], location='bottom', zorder=10)
     create_gradient_fade(ax, THEME['gradient_color'], location='top', zorder=10)
     
-    # 4. Typography using Roboto font
+    # 4. Typography using Roboto font with responsive sizing
+    city_upper = city.upper()
+    city_length = len(city_upper)
+
+    # Determine font sizes based on city name length
+    if city_length <= 8:
+        # Short names: full spacing and large size
+        base_size = 60
+        city_spacing = "  "
+    elif city_length <= 12:
+        # Medium names: reduced spacing and size
+        base_size = 48
+        city_spacing = " "
+    elif city_length <= 18:
+        # Long names: minimal spacing and smaller size
+        base_size = 36
+        city_spacing = " "
+    else:
+        # Very long names: no spacing, wrap if needed
+        base_size = 28
+        city_spacing = ""
+
     if FONTS:
-        font_main = FontProperties(fname=FONTS['bold'], size=60)
-        font_top = FontProperties(fname=FONTS['bold'], size=40)
+        font_main = FontProperties(fname=FONTS['bold'], size=base_size)
         font_sub = FontProperties(fname=FONTS['light'], size=22)
         font_coords = FontProperties(fname=FONTS['regular'], size=14)
     else:
         # Fallback to system fonts
-        font_main = FontProperties(family='monospace', weight='bold', size=60)
-        font_top = FontProperties(family='monospace', weight='bold', size=40)
+        font_main = FontProperties(family='monospace', weight='bold', size=base_size)
         font_sub = FontProperties(family='monospace', weight='normal', size=22)
         font_coords = FontProperties(family='monospace', size=14)
-    
-    spaced_city = "  ".join(list(city.upper()))
+
+    # Handle very long city names by wrapping
+    if city_length > 20:
+        # Split into two lines at a space or middle point
+        words = city_upper.split()
+        if len(words) > 1:
+            # Find best split point (closest to middle)
+            mid_point = city_length // 2
+            current_len = 0
+            split_index = 0
+            for i, word in enumerate(words):
+                current_len += len(word) + (1 if i > 0 else 0)
+                if current_len >= mid_point:
+                    split_index = i
+                    break
+
+            line1 = " ".join(words[:split_index + 1])
+            line2 = " ".join(words[split_index + 1:])
+        else:
+            # No spaces, split in middle
+            mid = len(city_upper) // 2
+            line1 = city_upper[:mid]
+            line2 = city_upper[mid:]
+
+        # Draw two lines
+        ax.text(0.5, 0.15, line1, transform=ax.transAxes,
+                color=THEME['text'], ha='center', fontproperties=font_main, zorder=11)
+        ax.text(0.5, 0.12, line2, transform=ax.transAxes,
+                color=THEME['text'], ha='center', fontproperties=font_main, zorder=11)
+        country_y = 0.09
+        coords_y = 0.06
+        line_y = 0.105
+    else:
+        # Single line with spacing
+        spaced_city = city_spacing.join(list(city_upper))
+        ax.text(0.5, 0.14, spaced_city, transform=ax.transAxes,
+                color=THEME['text'], ha='center', fontproperties=font_main, zorder=11)
+        country_y = 0.10
+        coords_y = 0.07
+        line_y = 0.125
 
     # --- BOTTOM TEXT ---
-    ax.text(0.5, 0.14, spaced_city, transform=ax.transAxes,
-            color=THEME['text'], ha='center', fontproperties=font_main, zorder=11)
-    
-    ax.text(0.5, 0.10, country.upper(), transform=ax.transAxes,
+    ax.text(0.5, country_y, country.upper(), transform=ax.transAxes,
             color=THEME['text'], ha='center', fontproperties=font_sub, zorder=11)
     
     lat, lon = point
     coords = f"{lat:.4f}° N / {lon:.4f}° E" if lat >= 0 else f"{abs(lat):.4f}° S / {lon:.4f}° E"
     if lon < 0:
         coords = coords.replace("E", "W")
-    
-    ax.text(0.5, 0.07, coords, transform=ax.transAxes,
+
+    ax.text(0.5, coords_y, coords, transform=ax.transAxes,
             color=THEME['text'], alpha=0.7, ha='center', fontproperties=font_coords, zorder=11)
-    
-    ax.plot([0.4, 0.6], [0.125, 0.125], transform=ax.transAxes, 
+
+    ax.plot([0.4, 0.6], [line_y, line_y], transform=ax.transAxes,
             color=THEME['text'], linewidth=1, zorder=11)
 
     # --- ATTRIBUTION (bottom right) ---
@@ -322,12 +427,31 @@ def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi
         font_attr = FontProperties(family='monospace', size=8)
     
     ax.text(0.98, 0.02, "© OpenStreetMap contributors", transform=ax.transAxes,
-            color=THEME['text'], alpha=0.5, ha='right', va='bottom', 
+            color=THEME['text'], alpha=0.5, ha='right', va='bottom',
             fontproperties=font_attr, zorder=11)
 
-    # 5. Save
+    # Add watermark if requested (for preview mode)
+    if watermark:
+        if FONTS:
+            watermark_font = FontProperties(fname=FONTS['bold'], size=72)
+        else:
+            watermark_font = FontProperties(family='monospace', weight='bold', size=72)
+
+        # Calculate watermark color (inverse of background for visibility)
+        bg_rgb = mcolors.to_rgb(THEME['bg'])
+        # Use text color with low opacity for subtle watermark
+        watermark_color = THEME['text']
+
+        # Add diagonal watermark across the center
+        ax.text(0.5, 0.5, 'PREVIEW', transform=ax.transAxes,
+                color=watermark_color, alpha=0.15, ha='center', va='center',
+                fontproperties=watermark_font, zorder=12, rotation=45)
+
+    # 5. Save with optimized PNG compression
     print(f"Saving to {output_file}...")
-    plt.savefig(output_file, dpi=dpi, facecolor=THEME['bg'])
+    plt.savefig(output_file, dpi=dpi, facecolor=THEME['bg'],
+                bbox_inches='tight', pad_inches=0,
+                pil_kwargs={'optimize': True, 'compress_level': 6})
     plt.close()
     print(f"✓ Done! Poster saved as {output_file}")
 

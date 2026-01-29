@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="preview-container">
+  <h2>Preview Your Map Poster</h2>
+  <p class="city-details">{{ order.city }}, {{ order.country }} · {{ order.size }} · {{ order.dpi }} DPI</p>
+
+  <!-- Main preview image -->
+  <div class="preview-main">
+    <div class="preview-image-wrapper">
+      <img id="preview-image"
+           src="{{ url_for('preview_image', session_id=order.session_id, theme_name=order.theme) }}"
+           alt="Map preview with watermark">
+      <div class="watermark-notice">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        Preview only - watermark removed after purchase
+      </div>
+    </div>
+  </div>
+
+  <!-- Compact theme selector -->
+  <div class="theme-selector-compact">
+    <label for="theme-select">Choose Theme:</label>
+    <select id="theme-select" onchange="switchTheme(this.value)">
+      {% for theme in themes %}
+      <option value="{{ theme }}" {% if theme == order.theme %}selected{% endif %}>
+        {{ theme.replace('_', ' ').title() }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Purchase CTA section -->
+  <div class="purchase-cta">
+    <form action="{{ url_for('purchase', session_id=order.session_id) }}" method="post" id="purchase-form">
+      <input type="hidden" name="theme" id="selected-theme" value="{{ order.theme }}">
+
+      <div class="cta-content">
+        <div class="cta-details">
+          <h3>Love this design?</h3>
+          <ul class="features-compact">
+            <li>{{ order.size }}" at {{ order.dpi }} DPI</li>
+            <li>Instant download</li>
+            <li>No watermark</li>
+          </ul>
+        </div>
+        <div class="cta-action">
+          <div class="price-badge">
+            <span class="price-amount">${{ "%.2f"|format(price_cents / 100) }}</span>
+          </div>
+          {% if stripe_ready %}
+          <button type="submit" class="btn-cta" id="purchase-btn">
+            <span>Purchase Now</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+          {% else %}
+          <button type="submit" class="btn-cta" id="purchase-btn">
+            <span>Generate Poster</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Purchase Loading Modal -->
+<div id="purchase-modal" class="modal">
+  <div class="modal-content">
+    <div class="loading-spinner"></div>
+    <h3 id="purchase-title">{% if stripe_ready %}Processing payment...{% else %}Generating final poster...{% endif %}</h3>
+    <p class="loading-status">{% if stripe_ready %}You'll be redirected to checkout{% else %}Creating high-resolution version without watermark{% endif %}</p>
+  </div>
+</div>
+
+<style>
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  padding: 3rem;
+  border-radius: 16px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid #f0f0f0;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  margin: 0 auto 2rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#purchase-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.loading-status {
+  color: #666;
+  margin: 0;
+}
+</style>
+
+<style>
+.preview-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.city-details {
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.preview-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.preview-main {
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.preview-image-wrapper {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+#preview-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+}
+
+.watermark-notice {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 24px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.theme-selector {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.theme-selector h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.theme-hint {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.theme-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.theme-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  width: 100%;
+}
+
+.theme-card:hover {
+  border-color: #666;
+  transform: translateX(4px);
+}
+
+.theme-card.active {
+  border-color: #007bff;
+  background: #f0f8ff;
+  font-weight: 600;
+}
+
+.theme-card.loading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.theme-preview-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  flex-shrink: 0;
+}
+
+.theme-name {
+  font-size: 0.95rem;
+}
+
+.purchase-section {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  border: 2px solid #e0e0e0;
+}
+
+.purchase-details {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+}
+
+.purchase-details h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.features {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0 0;
+}
+
+.features li {
+  padding: 0.4rem 0;
+  color: #444;
+}
+
+.purchase-action {
+  text-align: center;
+}
+
+.price-display {
+  margin-bottom: 1rem;
+}
+
+.currency {
+  font-size: 1.2rem;
+  color: #666;
+  vertical-align: top;
+}
+
+.amount {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+@media (max-width: 968px) {
+  .preview-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-selector {
+    max-height: 400px;
+  }
+
+  .purchase-details {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<script>
+let currentTheme = '{{ order.theme }}';
+
+function switchTheme(themeName) {
+  if (themeName === currentTheme) return;
+
+  const img = document.getElementById('preview-image');
+  const themeCards = document.querySelectorAll('.theme-card');
+  const selectedInput = document.getElementById('selected-theme');
+
+  // Update active state
+  themeCards.forEach(card => {
+    if (card.dataset.theme === themeName) {
+      card.classList.add('active', 'loading');
+    } else {
+      card.classList.remove('active');
+    }
+  });
+
+  // Update hidden form field
+  selectedInput.value = themeName;
+
+  // Load new preview
+  const newSrc = "{{ url_for('preview_image', session_id=order.session_id, theme_name='THEME_PLACEHOLDER') }}".replace('THEME_PLACEHOLDER', themeName);
+
+  img.style.opacity = '0.5';
+  img.src = newSrc;
+
+  img.onload = function() {
+    img.style.opacity = '1';
+    themeCards.forEach(card => card.classList.remove('loading'));
+    currentTheme = themeName;
+  };
+}
+
+// Purchase form loading state
+const purchaseForm = document.getElementById('purchase-form');
+const purchaseModal = document.getElementById('purchase-modal');
+const purchaseBtn = document.getElementById('purchase-btn');
+
+purchaseForm.addEventListener('submit', function(e) {
+  purchaseModal.classList.add('active');
+  purchaseBtn.disabled = true;
+  purchaseBtn.textContent = 'Processing...';
+});
+</script>
+{% endblock %}
