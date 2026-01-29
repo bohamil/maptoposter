@@ -299,13 +299,8 @@ def create():
     except ValueError:
         return render_index(error="Invalid distance value.")
 
-    # Validate DPI
-    try:
-        dpi = int(request.form.get("dpi", "300"))
-        if dpi not in ALLOWED_DPI:
-            return render_index(error="DPI must be 150, 240, or 300.")
-    except ValueError:
-        return render_index(error="Invalid DPI value.")
+    # Always use 300 DPI for print-ready quality
+    dpi = 300
 
     size = request.form.get("size", "12x16")
     email = request.form.get("email", "").strip() or None

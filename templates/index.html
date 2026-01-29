@@ -52,8 +52,12 @@
         </select>
       </label>
       <label>
-        Map radius (meters)
-        <input name="distance" type="number" min="3000" max="40000" value="29000">
+        Map Coverage
+        <select name="distance">
+          <option value="8000">Focused - Neighborhood detail</option>
+          <option value="15000" selected>Balanced - City center view</option>
+          <option value="25000">Wide - Full city area</option>
+        </select>
       </label>
       <label>
         Print size (inches)
@@ -70,13 +74,6 @@
             <option value="24x18">24" × 18"</option>
             <option value="36x24">36" × 24"</option>
           </optgroup>
-        </select>
-      </label>
-      <label>
-        Output DPI
-        <select name="dpi">
-          <option value="300" selected>300 (print ready)</option>
-          <option value="240">240 (faster preview)</option>
         </select>
       </label>
       <label class="full-width">
