@@ -17,11 +17,18 @@ import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 import matplotlib.colors as mcolors
 
-# Configure OSMnx
+# Optimize matplotlib for low memory
+plt.ioff()  # Turn off interactive mode
+import gc
+gc.enable()  # Enable garbage collection
+
+# Configure OSMnx with memory optimizations
 APP_UA = os.getenv("OSM_USER_AGENT", "CityMapPoster/1.0 (contact: bo.hamilton09@gmail.com)")
 ox.settings.http_headers = {"User-Agent": APP_UA}
 ox.settings.use_cache = True
 ox.settings.cache_folder = "./cache"
+ox.settings.memory_only_mode = True  # Don't write graphs to disk
+ox.settings.log_console = False  # Reduce logging overhead
 
 THEMES_DIR = "themes"
 FONTS_DIR = "fonts"
@@ -452,7 +459,12 @@ def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi
     plt.savefig(output_file, dpi=dpi, facecolor=THEME['bg'],
                 bbox_inches='tight', pad_inches=0,
                 pil_kwargs={'optimize': True, 'compress_level': 6})
-    plt.close()
+    plt.close('all')
+
+    # Force garbage collection to free memory
+    import gc
+    gc.collect()
+
     print(f"✓ Done! Poster saved as {output_file}")
 
 def print_examples():
