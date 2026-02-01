@@ -282,20 +282,18 @@ def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi
     water = None
     parks = None
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        # Submit all tasks concurrently
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        # Submit all tasks concurrently (parks removed for cleaner maps)
         future_streets = executor.submit(_fetch_street_network, point, dist)
         future_water = executor.submit(_fetch_water_features, point, dist)
-        future_parks = executor.submit(_fetch_parks, point, dist)
 
         # Progress bar for completion tracking
         futures = {
             'Street network': future_streets,
             'Water features': future_water,
-            'Parks/green spaces': future_parks
         }
 
-        with tqdm(total=3, desc="Downloading", unit="layer", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
+        with tqdm(total=2, desc="Downloading", unit="layer", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
             for name, future in futures.items():
                 pbar.set_description(f"Downloading {name}")
                 result = future.result()  # Wait for completion
@@ -304,8 +302,6 @@ def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi
                     G = result
                 elif name == 'Water features':
                     water = result
-                elif name == 'Parks/green spaces':
-                    parks = result
 
                 pbar.update(1)
 
@@ -318,11 +314,9 @@ def create_poster(city, country, point, dist, output_file, figsize=(12, 16), dpi
     ax.set_position([0, 0, 1, 1])
     
     # 3. Plot Layers
-    # Layer 1: Polygons
+    # Layer 1: Water bodies only (parks removed for cleaner look)
     if water is not None and not water.empty:
         water.plot(ax=ax, facecolor=THEME['water'], edgecolor='none', zorder=1)
-    if parks is not None and not parks.empty:
-        parks.plot(ax=ax, facecolor=THEME['parks'], edgecolor='none', zorder=2)
     
     # Layer 2: Roads with hierarchy coloring
     print("Applying road hierarchy colors...")
