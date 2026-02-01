@@ -563,7 +563,7 @@ def generate_final(session_id: str):
     )
 
 
-@app.post("/webhook/stripe")
+@app.post("/webhook")
 def stripe_webhook():
     """Handle Stripe webhook events for payment confirmation"""
     payload = request.data
