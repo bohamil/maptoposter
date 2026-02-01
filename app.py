@@ -603,43 +603,27 @@ def stripe_webhook():
             print(f"Warning: Order {order_id} not found for Stripe session {session['id']}")
             return {"status": "ignored"}, 200
 
-        # Mark as paid and generate final poster
+        # Mark as paid (poster already generated during preview!)
         if not order.paid:
             print(f"Processing payment for order {order_id}")
             order.paid = True
 
-            # Generate final high-res poster without watermark
-            if order.coordinates is None:
-                coords = poster.get_coordinates(order.city, order.country)
-            else:
-                coords = order.coordinates
+            # Poster should already exist from initial generation
+            if not order.poster_filename:
+                print(f"ERROR: Order {order_id} has no poster_filename - this shouldn't happen!")
+                return {"status": "error", "message": "Poster not found"}, 500
 
-            poster_filename = (
-                f"{order.city.lower().replace(' ', '_')}_{order.theme}_"
-                f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-            )
-            poster_path = BASE_DIR / poster.POSTERS_DIR / poster_filename
-
-            poster.THEME = poster.load_theme(order.theme)
-            poster.create_poster(
-                city=order.city,
-                country=order.country,
-                point=coords,
-                dist=order.distance,
-                output_file=str(poster_path),
-                figsize=SIZE_OPTIONS[order.size],
-                dpi=order.dpi,
-                watermark=False,  # No watermark for paid version
-            )
-
-            order.poster_filename = poster_filename
             save_order(order)
 
             # Send email if provided
             if order.email:
                 try:
-                    send_email(order)
-                    print(f"Email sent to {order.email} for order {order_id}")
+                    poster_path = BASE_DIR / poster.POSTERS_DIR / order.poster_filename
+                    if poster_path.exists():
+                        send_email(order)
+                        print(f"Email sent to {order.email} for order {order_id}")
+                    else:
+                        print(f"ERROR: Poster file not found: {poster_path}")
                 except Exception as e:
                     print(f"Failed to send email for order {order_id}: {e}")
 
