@@ -327,29 +327,35 @@ def create():
             error="We could not find that city. Please double-check the spelling."
         )
 
-    # Create preview with watermark
-    preview_id = uuid.uuid4().hex
-    preview_filename = f"preview_{preview_id}_{theme}.png"
-    preview_path = PREVIEWS_DIR / preview_filename
+    # Generate full-resolution poster ONCE (we'll create watermarked preview from it)
+    session_id = uuid.uuid4().hex
+    poster_filename = (
+        f"{city.lower().replace(' ', '_')}_{theme}_"
+        f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    )
+    poster_path = BASE_DIR / poster.POSTERS_DIR / poster_filename
 
-    # Generate lower-res preview (faster, smaller file)
-    preview_dpi = 150
+    # Generate at full 300 DPI without watermark
     poster.THEME = poster.load_theme(theme)
     poster.create_poster(
         city=city,
         country=country,
         point=coords,
         dist=distance,
-        output_file=str(preview_path),
+        output_file=str(poster_path),
         figsize=SIZE_OPTIONS[size],
-        dpi=preview_dpi,
-        watermark=True,
+        dpi=dpi,
+        watermark=False,  # Generate clean version, we'll watermark for preview only
     )
 
-    invoice_id = preview_id
-    invoice_filename = f"{invoice_id}.json"
+    # Create watermarked, lower-resolution preview from the full poster
+    preview_filename = f"preview_{session_id}_{theme}.png"
+    preview_path = PREVIEWS_DIR / preview_filename
+    poster.create_preview_from_poster(str(poster_path), str(preview_path), max_width=1200)
+
+    invoice_filename = f"{session_id}.pdf"
     order = Order(
-        session_id=invoice_id,
+        session_id=session_id,
         city=city,
         country=country,
         theme=theme,
@@ -357,7 +363,7 @@ def create():
         size=size,
         dpi=dpi,
         email=email,
-        poster_filename="",  # Will be generated after purchase
+        poster_filename=poster_filename,  # Already generated!
         invoice_filename=invoice_filename,
         created_at=datetime.now(timezone.utc).isoformat(),
         paid=False,
