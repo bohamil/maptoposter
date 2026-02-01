@@ -22,13 +22,13 @@ plt.ioff()  # Turn off interactive mode
 import gc
 gc.enable()  # Enable garbage collection
 
-# Configure OSMnx with memory optimizations
+# Configure OSMnx with caching for performance
 APP_UA = os.getenv("OSM_USER_AGENT", "CityMapPoster/1.0 (contact: bo.hamilton09@gmail.com)")
 ox.settings.http_headers = {"User-Agent": APP_UA}
-ox.settings.use_cache = True
-ox.settings.cache_folder = "./cache"
-ox.settings.memory_only_mode = True  # Don't write graphs to disk
+ox.settings.use_cache = True  # Cache downloaded networks
+ox.settings.cache_folder = "./cache"  # Persistent disk cache
 ox.settings.log_console = False  # Reduce logging overhead
+# Note: memory_only_mode disabled to allow persistent caching across requests
 
 THEMES_DIR = "themes"
 FONTS_DIR = "fonts"
