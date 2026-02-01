@@ -555,6 +555,85 @@ def list_themes():
             print(f"    {description}")
         print()
 
+
+def create_preview_from_poster(input_file, output_file, max_width=1200):
+    """
+    Create a watermarked, lower-resolution preview from a full-resolution poster.
+    This prevents users from saving the full quality version.
+    """
+    from PIL import Image, ImageDraw, ImageFont
+    from pathlib import Path
+
+    # Open the full resolution image
+    img = Image.open(input_file)
+    original_width, original_height = img.size
+
+    # Resize to lower resolution (max 1200px width)
+    if original_width > max_width:
+        ratio = max_width / original_width
+        new_width = max_width
+        new_height = int(original_height * ratio)
+        img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        print(f"Resized preview from {original_width}x{original_height} to {new_width}x{new_height}")
+
+    width, height = img.size
+
+    # Convert to RGBA for transparency support
+    if img.mode != 'RGBA':
+        img = img.convert('RGBA')
+
+    # Create overlay for watermark
+    overlay = Image.new('RGBA', img.size, (255, 255, 255, 0))
+    draw = ImageDraw.Draw(overlay)
+
+    # Load font
+    try:
+        font_size = int(min(width, height) * 0.15)
+        if FONTS and Path(FONTS['bold']).exists():
+            font = ImageFont.truetype(str(FONTS['bold']), font_size)
+        else:
+            font = ImageFont.load_default()
+    except:
+        font = ImageFont.load_default()
+
+    # Draw "PREVIEW" watermark diagonally
+    text = "PREVIEW"
+
+    # Dark gray with 50% opacity for high visibility
+    watermark_color = (50, 50, 50, 128)
+
+    # Get text size
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+
+    # Position in center
+    center_x = width // 2 - text_width // 2
+    center_y = height // 2 - text_height // 2
+
+    # Draw on temp image for rotation
+    txt_img = Image.new('RGBA', (width, height), (255, 255, 255, 0))
+    txt_draw = ImageDraw.Draw(txt_img)
+
+    # Draw watermark in center
+    txt_draw.text((center_x, center_y), text, font=font, fill=watermark_color)
+
+    # Draw additional watermark copies for better coverage
+    txt_draw.text((center_x - width//3, center_y - height//3), text, font=font, fill=watermark_color)
+    txt_draw.text((center_x + width//3, center_y + height//3), text, font=font, fill=watermark_color)
+
+    # Rotate 45 degrees
+    rotated = txt_img.rotate(45, center=(width//2, height//2), fillcolor=(255, 255, 255, 0))
+
+    # Composite watermark onto image
+    watermarked = Image.alpha_composite(img, rotated)
+
+    # Convert to RGB and save
+    watermarked = watermarked.convert('RGB')
+    watermarked.save(output_file, 'PNG', optimize=True, compress_level=6)
+    print(f"✓ Watermarked preview saved as {output_file}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate beautiful map posters for any city",
