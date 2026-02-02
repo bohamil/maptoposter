@@ -638,6 +638,42 @@ def cancel():
     return render_template("cancel.html", session_id=session_id)
 
 
+def convert_to_pdf(png_path: Path, order: Order) -> Path:
+    """Convert PNG poster to PDF format"""
+    from reportlab.lib.pagesizes import inch
+    from reportlab.pdfgen import canvas
+    from PIL import Image
+
+    # Generate PDF filename
+    pdf_filename = png_path.stem + ".pdf"
+    pdf_path = png_path.parent / pdf_filename
+
+    # Get image dimensions
+    img = Image.open(png_path)
+    img_width, img_height = img.size
+
+    # Convert size string to dimensions in inches
+    width_str, height_str = order.size.lower().split('x')
+    width_inches = float(width_str)
+    height_inches = float(height_str)
+
+    # Create PDF with exact poster dimensions
+    pdf = canvas.Canvas(str(pdf_path), pagesize=(width_inches * inch, height_inches * inch))
+
+    # Draw the image to fill the entire page
+    pdf.drawImage(
+        str(png_path),
+        0, 0,
+        width=width_inches * inch,
+        height=height_inches * inch,
+        preserveAspectRatio=True,
+        anchor='c'
+    )
+
+    pdf.save()
+    return pdf_path
+
+
 @app.get("/download/<session_id>/<path:filename>")
 def download(session_id: str, filename: str):
     try:
@@ -650,10 +686,25 @@ def download(session_id: str, filename: str):
 
     poster_path = BASE_DIR / poster.POSTERS_DIR / order.poster_filename
     invoice_path = INVOICES_DIR / order.invoice_filename
+
+    # Handle PNG download
     if filename == order.poster_filename and poster_path.exists():
         return send_file(poster_path, as_attachment=True)
+
+    # Handle PDF download
+    if filename.endswith('.pdf') and poster_path.exists():
+        pdf_path = poster_path.parent / (poster_path.stem + '.pdf')
+
+        # Generate PDF if it doesn't exist
+        if not pdf_path.exists():
+            pdf_path = convert_to_pdf(poster_path, order)
+
+        return send_file(pdf_path, as_attachment=True)
+
+    # Handle invoice download
     if filename == order.invoice_filename and invoice_path.exists():
         return send_file(invoice_path, as_attachment=True)
+
     abort(404)
 
 

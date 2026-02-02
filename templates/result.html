@@ -11,6 +11,9 @@
       <a class="primary" href="{{ url_for('download', session_id=order.session_id, filename=order.poster_filename) }}">
         Download PNG
       </a>
+      <a class="primary" href="{{ url_for('download', session_id=order.session_id, filename=order.poster_filename.replace('.png', '.pdf')) }}">
+        Download PDF
+      </a>
       <a href="{{ url_for('download', session_id=order.session_id, filename=order.invoice_filename) }}">
         Download invoice
       </a>
@@ -28,8 +31,8 @@
     <h3>Print shop tips</h3>
     <ul>
       <li>We export at {{ order.dpi }} DPI for clean, gallery-quality prints.</li>
-      <li>Most print shops accept PNG or PDF. If they request PDF, use their conversion tools.</li>
-      <li>Stick to the size you selected to avoid stretching.</li>
+      <li>Both PNG and PDF formats are available - use whichever your print shop prefers.</li>
+      <li>Stick to the size you selected ({{ order.size }}") to avoid stretching.</li>
     </ul>
   </section>
 {% endblock %}
