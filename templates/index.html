@@ -1,302 +1,374 @@
 {% extends "base.html" %}
 {% block content %}
-  <section class="card">
-    <h2>Examples customers frame and share</h2>
-    <p class="muted">
-      From cozy cafés to luxury rentals, these posters sell the story of a place. Pick a theme or
-      size, and we’ll deliver a ready-to-print file.
-    </p>
-    <div class="example-grid">
-      {% for example in examples %}
-        <figure class="example-card">
-          <img
-            src="{{ url_for('example_poster', filename=example.filename) }}"
-            alt="{{ example.city }} map poster in {{ example.theme }} theme"
-            loading="lazy"
-          >
-          <figcaption>
-            <div class="example-meta">
-              <strong>{{ example.city }}</strong>
-              <span class="muted">{{ example.theme }} · {{ example.size }}</span>
-            </div>
-            <span class="example-tag">Print-ready</span>
-          </figcaption>
-        </figure>
-      {% endfor %}
-    </div>
-  </section>
 
-  <section class="card">
-    <h2>Create your poster</h2>
-    <p class="muted">Choose a city, theme, and print size. We’ll generate a ready-to-print PNG.</p>
-
-    {% if error %}
-      <div class="alert">{{ error }}</div>
-    {% endif %}
-
-    <form class="form-grid" method="post" action="{{ url_for('create') }}" id="create-form">
-      <label>
-        City
-        <input name="city" type="text" placeholder="Paris" required>
-      </label>
-      <label>
-        Country
-        <input name="country" type="text" placeholder="France" required>
-      </label>
-      <label>
-        Theme
-        <select name="theme">
-          {% for theme in themes %}
-            <option value="{{ theme }}">{{ theme.replace("_", " ").title() }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <label>
-        Map Coverage
-        <select name="distance">
-          <option value="8000">Focused - Neighborhood detail</option>
-          <option value="12000" selected>Balanced - City center view</option>
-          <option value="18000">Wide - Extended area</option>
-        </select>
-      </label>
-      <label>
-        Print size (inches)
-        <select name="size">
-          <optgroup label="Portrait (Vertical)">
-            <option value="8x10">8" × 10"</option>
-            <option value="12x16" selected>12" × 16"</option>
-            <option value="18x24">18" × 24"</option>
-            <option value="24x36">24" × 36"</option>
-          </optgroup>
-          <optgroup label="Landscape (Horizontal)">
-            <option value="10x8">10" × 8"</option>
-            <option value="16x12">16" × 12"</option>
-            <option value="24x18">24" × 18"</option>
-            <option value="36x24">36" × 24"</option>
-          </optgroup>
-        </select>
-      </label>
-      <label class="full-width">
-        Email delivery (optional)
-        <input name="email" type="email" placeholder="you@example.com">
-      </label>
-      <div class="full-width">
-        <button type="submit" class="primary" id="submit-btn">Generate poster</button>
+<!-- Hero Section -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="eyebrow">Premium Cartographic Art</span>
       </div>
-    </form>
-  </section>
+      <h1 class="hero-title">
+        Where you live,<br>
+        <span class="gradient-text">rendered in ink.</span>
+      </h1>
+      <p class="hero-description">
+        Gallery-quality street network prints that transform any address into art.
+        For property owners who understand that the details define the space.
+      </p>
+      <div class="hero-actions">
+        <a href="#create" class="btn btn-primary">
+          Create Your Print
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </a>
+        <a href="#gallery" class="btn btn-secondary">View Collection</a>
+      </div>
 
-  <!-- Loading Modal -->
-  <div id="loading-modal" class="modal">
-    <div class="modal-content">
-      <div class="loading-spinner"></div>
-      <h3 id="loading-title">Generating your map poster...</h3>
-      <p id="loading-message" class="loading-status">This usually takes 10-30 seconds</p>
-      <div class="loading-steps">
-        <div class="step" id="step-geocoding">
-          <div class="step-icon">📍</div>
-          <div class="step-text">
-            <strong>Finding coordinates</strong>
-            <span class="step-status">Starting...</span>
-          </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-value">300<span class="unit">DPI</span></div>
+          <div class="stat-label">Print Resolution</div>
         </div>
-        <div class="step" id="step-downloading">
-          <div class="step-icon">🗺️</div>
-          <div class="step-text">
-            <strong>Downloading map data</strong>
-            <span class="step-status">Waiting...</span>
-          </div>
+        <div class="stat">
+          <div class="stat-value">10K<span class="unit">+</span></div>
+          <div class="stat-label">Street Segments</div>
         </div>
-        <div class="step" id="step-rendering">
-          <div class="step-icon">🎨</div>
-          <div class="step-text">
-            <strong>Rendering poster</strong>
-            <span class="step-status">Waiting...</span>
-          </div>
+        <div class="stat">
+          <div class="stat-value">1<span class="unit">:1</span></div>
+          <div class="stat-label">Unique Prints</div>
         </div>
       </div>
     </div>
   </div>
+</section>
 
-  <style>
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-    }
+<!-- Create Form -->
+<section class="section" id="create">
+  <div class="container">
+    <div class="card accent">
+      <h2>Create your print</h2>
+      <p class="muted">Enter any address. We render its unique street network into gallery-quality art.</p>
 
-    .modal.active {
-      display: flex;
-    }
-
-    .modal-content {
-      background: white;
-      padding: 3rem;
-      border-radius: 16px;
-      max-width: 500px;
-      width: 90%;
-      text-align: center;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-
-    .loading-spinner {
-      width: 60px;
-      height: 60px;
-      border: 4px solid #f0f0f0;
-      border-top: 4px solid #007bff;
-      border-radius: 50%;
-      margin: 0 auto 2rem;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    #loading-title {
-      margin: 0 0 0.5rem 0;
-      font-size: 1.5rem;
-      color: #333;
-    }
-
-    .loading-status {
-      color: #666;
-      margin-bottom: 2rem;
-    }
-
-    .loading-steps {
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .step {
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      padding: 1rem;
-      background: #f8f9fa;
-      border-radius: 8px;
-      transition: all 0.3s;
-    }
-
-    .step.active {
-      background: #e7f3ff;
-      border-left: 4px solid #007bff;
-    }
-
-    .step.complete {
-      background: #e8f5e9;
-      border-left: 4px solid #28a745;
-    }
-
-    .step-icon {
-      font-size: 1.5rem;
-      flex-shrink: 0;
-    }
-
-    .step-text {
-      flex: 1;
-    }
-
-    .step-text strong {
-      display: block;
-      margin-bottom: 0.25rem;
-      color: #333;
-    }
-
-    .step-status {
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    .step.active .step-status {
-      color: #007bff;
-      font-weight: 600;
-    }
-
-    .step.complete .step-status {
-      color: #28a745;
-    }
-
-    .step.complete .step-status::before {
-      content: "✓ ";
-    }
-  </style>
-
-  <script>
-    const form = document.getElementById('create-form');
-    const modal = document.getElementById('loading-modal');
-    const submitBtn = document.getElementById('submit-btn');
-
-    // Simulate progress steps
-    function updateStep(stepId, status, message) {
-      const step = document.getElementById(stepId);
-      const statusEl = step.querySelector('.step-status');
-
-      step.classList.remove('active', 'complete');
-      if (status === 'active') {
-        step.classList.add('active');
-      } else if (status === 'complete') {
-        step.classList.add('complete');
-      }
-
-      statusEl.textContent = message;
-    }
-
-    function simulateProgress() {
-      // Step 1: Geocoding (starts immediately)
-      updateStep('step-geocoding', 'active', 'Looking up location...');
-
-      setTimeout(() => {
-        updateStep('step-geocoding', 'complete', 'Found!');
-        updateStep('step-downloading', 'active', 'Fetching streets, water, parks...');
-      }, 2000);
-
-      setTimeout(() => {
-        updateStep('step-downloading', 'complete', 'Downloaded!');
-        updateStep('step-rendering', 'active', 'Creating your poster...');
-      }, 8000);
-    }
-
-    form.addEventListener('submit', function(e) {
-      // Show loading modal
-      modal.classList.add('active');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Generating...';
-
-      // Start progress simulation
-      simulateProgress();
-
-      // Form will submit normally
-    });
-  </script>
-  </section>
-
-  <section class="card accent">
-    <h3>Instant checkout</h3>
-    <p class="muted">
-      {% if stripe_ready %}
-        Secure payments are powered by Stripe. We’ll issue an invoice and send your files automatically.
-      {% else %}
-        Stripe is not configured yet. Add keys to enable checkout and invoices.
+      {% if error %}
+        <div class="alert" role="alert">{{ error }}</div>
       {% endif %}
-    </p>
-    <div class="price-row">
-      <div>
-        <strong>{{ price_currency }} {{ "%.2f"|format(price_cents / 100) }}</strong>
-        <span class="muted">per poster</span>
-      </div>
-      <div class="chip">No account required</div>
+
+      <form class="form-grid" method="post" action="{{ url_for('create') }}" id="create-form">
+        <label>
+          City
+          <input name="city" type="text" placeholder="Austin" required autocomplete="address-level2">
+        </label>
+        <label>
+          Country
+          <input name="country" type="text" placeholder="United States" required autocomplete="country-name">
+        </label>
+        <label>
+          Theme
+          <select name="theme">
+            {% for theme in themes %}
+              <option value="{{ theme }}">{{ theme.replace("_", " ").title() }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          Coverage
+          <select name="distance">
+            <option value="8000">Focused / Neighborhood</option>
+            <option value="12000" selected>Balanced / City Center</option>
+            <option value="18000">Wide / Extended Area</option>
+          </select>
+        </label>
+        <label>
+          Print Size
+          <select name="size">
+            <optgroup label="Portrait">
+              <option value="8x10">8 x 10 in</option>
+              <option value="12x16" selected>12 x 16 in</option>
+              <option value="18x24">18 x 24 in</option>
+              <option value="24x36">24 x 36 in</option>
+            </optgroup>
+            <optgroup label="Landscape">
+              <option value="10x8">10 x 8 in</option>
+              <option value="16x12">16 x 12 in</option>
+              <option value="24x18">24 x 18 in</option>
+              <option value="36x24">36 x 24 in</option>
+            </optgroup>
+          </select>
+        </label>
+        <label class="full-width">
+          Email (optional)
+          <input name="email" type="email" placeholder="you@example.com" autocomplete="email">
+        </label>
+        <div class="full-width">
+          <button type="submit" class="btn btn-primary" id="submit-btn" style="width: 100%;">
+            Create Your Print
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+      </form>
     </div>
-  </section>
+  </div>
+</section>
+
+<!-- Gallery Section -->
+<section class="section gallery-section" id="gallery">
+  <div class="container">
+    <h2>The Collection</h2>
+    <p class="muted">Each print captures the unique geometry of a place. No two street networks are alike.</p>
+
+    <div class="example-grid">
+      {% for example in examples %}
+        <figure class="example-card">
+          <div class="example-card-image">
+            <img
+              src="{{ url_for('example_poster', filename=example.filename) }}"
+              alt="{{ example.city }} street map in {{ example.theme }} theme"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+          <figcaption>
+            <div class="example-meta">
+              <strong>{{ example.city }}</strong>
+              <span>{{ example.theme }} / {{ example.size }}</span>
+            </div>
+            <span class="example-price">Gallery</span>
+          </figcaption>
+        </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Loading Modal -->
+<div id="loading-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loading-title">
+  <div class="modal-content">
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <h3 id="loading-title">Creating your print</h3>
+    <p id="loading-subtitle" class="muted" style="margin-bottom: var(--space-2);"></p>
+    <p id="loading-message" class="muted" style="font-size: var(--text-sm);">This takes 15-30 seconds</p>
+
+    <div class="loading-steps" style="margin-top: var(--space-8); text-align: left;">
+      <div class="step" id="step-geocoding">
+        <div class="step-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="10" r="3"/>
+            <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/>
+          </svg>
+        </div>
+        <div class="step-text">
+          <strong>Locating coordinates</strong>
+          <span class="step-status">Starting...</span>
+        </div>
+      </div>
+      <div class="step" id="step-downloading">
+        <div class="step-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <div class="step-text">
+          <strong>Downloading map data</strong>
+          <span class="step-status">Waiting...</span>
+        </div>
+      </div>
+      <div class="step" id="step-rendering">
+        <div class="step-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <div class="step-text">
+          <strong>Rendering artwork</strong>
+          <span class="step-status">Waiting...</span>
+        </div>
+      </div>
+    </div>
+
+    <p id="loading-fun-fact" class="loading-fun-fact"></p>
+  </div>
+</div>
+
+<style>
+  .loading-steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--void-elevated);
+    border-radius: 2px;
+    border-left: 2px solid var(--white-10);
+    transition: all var(--duration-normal) var(--ease-out-expo);
+  }
+
+  .step.active {
+    background: var(--void-card);
+    border-left-color: var(--cyan);
+  }
+
+  .step.complete {
+    border-left-color: var(--success);
+  }
+
+  .step-icon {
+    color: var(--white-30);
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: color var(--duration-normal) var(--ease-out-expo);
+  }
+
+  .step.active .step-icon {
+    color: var(--cyan);
+  }
+
+  .step.complete .step-icon {
+    color: var(--success);
+  }
+
+  .step-text {
+    flex: 1;
+  }
+
+  .step-text strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    margin-bottom: var(--space-1);
+    color: var(--white);
+  }
+
+  .step-status {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--white-50);
+    transition: color var(--duration-normal) var(--ease-out-expo);
+  }
+
+  .step.active .step-status {
+    color: var(--cyan);
+  }
+
+  .step.complete .step-status {
+    color: var(--success);
+  }
+
+  .loading-fun-fact {
+    margin-top: var(--space-6);
+    padding: var(--space-4);
+    background: var(--void-elevated);
+    border-left: 2px solid var(--cyan-subtle);
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--white-50);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all var(--duration-normal) var(--ease-out-expo);
+  }
+
+  .loading-fun-fact:not(:empty) {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+
+<script>
+  const form = document.getElementById('create-form');
+  const modal = document.getElementById('loading-modal');
+  const submitBtn = document.getElementById('submit-btn');
+
+  const funFacts = [
+    "The average city contains over 10,000 unique street segments.",
+    "Street networks reveal centuries of urban planning decisions.",
+    "Every street pattern is unique — like a fingerprint for your city.",
+    "Matte black or white frames complement the minimal aesthetic.",
+    "Guests often ask about the story behind these prints."
+  ];
+
+  function updateStep(stepId, status, message) {
+    const step = document.getElementById(stepId);
+    const statusEl = step.querySelector('.step-status');
+
+    step.classList.remove('active', 'complete');
+    if (status === 'active') {
+      step.classList.add('active');
+    } else if (status === 'complete') {
+      step.classList.add('complete');
+    }
+
+    statusEl.textContent = message;
+  }
+
+  function simulateProgress(cityName) {
+    updateStep('step-geocoding', 'active', 'Finding ' + cityName + '...');
+
+    setTimeout(function() {
+      updateStep('step-geocoding', 'complete', 'Coordinates locked');
+      updateStep('step-downloading', 'active', 'Fetching streets, water, parks...');
+    }, 2500);
+
+    setTimeout(function() {
+      const factEl = document.getElementById('loading-fun-fact');
+      factEl.textContent = funFacts[Math.floor(Math.random() * funFacts.length)];
+    }, 5000);
+
+    setTimeout(function() {
+      updateStep('step-downloading', 'complete', 'Data loaded');
+      updateStep('step-rendering', 'active', 'Rendering artwork...');
+    }, 10000);
+  }
+
+  form.addEventListener('submit', function(e) {
+    const cityInput = form.querySelector('input[name="city"]');
+    const cityName = cityInput.value.trim() || 'your city';
+
+    document.getElementById('loading-title').textContent = 'Creating your ' + cityName + ' print';
+    document.getElementById('loading-subtitle').textContent = 'Crafting something unique';
+
+    modal.classList.add('active');
+    submitBtn.disabled = true;
+    submitBtn.querySelector('span') && (submitBtn.querySelector('span').textContent = 'Creating...');
+
+    simulateProgress(cityName);
+  });
+</script>
+
+<!-- Investment Section -->
+<section class="section">
+  <div class="container">
+    <div class="card">
+      <h3>Investment</h3>
+      <p class="muted">
+        {% if stripe_ready %}
+          Museum-quality digital print file. Delivered instantly. Frame-ready.
+        {% else %}
+          Digital print file delivered instantly. Ready to frame.
+        {% endif %}
+      </p>
+      <div class="price-row">
+        <div>
+          <strong>{{ price_currency }} {{ "%.2f"|format(price_cents / 100) }}</strong>
+          <span class="muted" style="display: block; font-size: var(--text-sm);">per print</span>
+        </div>
+        <span class="chip">No account required</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 {% endblock %}

@@ -1,10 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
-  <section class="card">
+<div class="cancel-container">
+  <div class="card" style="text-align: center; padding: var(--space-12) var(--space-8);">
+    <div style="margin-bottom: var(--space-6);">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--white-30)" stroke-width="1.5" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+    </div>
     <h2>Checkout canceled</h2>
-    <p class="muted">
-      Your payment was canceled. You can return and try again whenever you are ready.
+    <p class="muted" style="margin-top: var(--space-4); margin-bottom: var(--space-8);">
+      Your payment was canceled. No charges were made.<br>
+      Your design is saved — return whenever you're ready.
     </p>
-    <a class="primary" href="{{ url_for('index') }}">Back to poster builder</a>
-  </section>
+    <a class="btn btn-primary" href="{{ url_for('index') }}">
+      Back to Studio
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </a>
+  </div>
+</div>
+
+<style>
+  .cancel-container {
+    max-width: 480px;
+    margin: var(--space-32) auto var(--space-10);
+    padding: var(--space-6);
+  }
+</style>
 {% endblock %}

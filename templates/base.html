@@ -3,37 +3,64 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Premium cartographic art for discerning properties. Transform any address into gallery-quality street network prints.">
+    <meta name="theme-color" content="#000000">
     <title>{{ title or "Map Poster Studio" }}</title>
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   </head>
   <body>
-    <header class="site-header">
+    <header class="site-header" id="site-header">
       <div class="container">
-        <div>
-          <p class="eyebrow"><a href="{{ url_for('index') }}" class="logo-link">Map Poster Studio</a></p>
-          <h1>Design a city map poster in minutes</h1>
-          <p class="subtitle">
-            Create Airbnb-ready prints with premium themes, multiple sizes, and instant downloads.
-          </p>
-        </div>
-        <div class="badge">
-          <span>Ready for print</span>
-          <strong>300 DPI PNG</strong>
-        </div>
+        <a href="{{ url_for('index') }}" class="logo">
+          <div class="logo-mark">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="logo-text">Map Poster Studio</span>
+        </a>
+        <span class="apex-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Apex Circle
+        </span>
       </div>
     </header>
 
-    <main class="container">
+    <main>
       {% block content %}{% endblock %}
     </main>
 
     <footer class="site-footer">
       <div class="container">
-        <p>
-          Built for hosts, property managers, and boutique stays. Need custom branding or bulk orders?
-          Contact us.
-        </p>
+        <p>For property owners who believe in the details.</p>
       </div>
     </footer>
+
+    <script>
+      // Sticky header effect
+      const header = document.getElementById('site-header');
+      let lastScroll = 0;
+
+      window.addEventListener('scroll', () => {
+        const currentScroll = window.scrollY;
+        if (currentScroll > 20) {
+          header.classList.add('scrolled');
+        } else {
+          header.classList.remove('scrolled');
+        }
+        lastScroll = currentScroll;
+      }, { passive: true });
+    </script>
   </body>
 </html>
